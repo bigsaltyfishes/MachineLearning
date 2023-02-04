@@ -32,9 +32,27 @@ class MyModel(nn.Module):
             nn.Linear(50, 10),  # Layer 11
         )
         # Use CUDA if available
+        # Or use DirectML instead
         if torch.cuda.is_available():
+            print("[INFO] CUDA detected, use CUDA for training")
             self.net_pone = self.net_pone.cuda()
             self.net_ptwo = self.net_ptwo.cuda()
+        else:
+            print("[INFO] CUDA not available")
+            try:
+                import torch_directml
+            except ModuleNotFoundError:
+                print("[INFO] DirectML not available")
+                print("[WARN] Use CPU for training")
+            else:
+                self.dml = torch_directml.device()
+                if not self.dml == None:
+                    print("[INFO] DirectML detected, use DirectML for training")
+                    self.net_pone = self.net_pone.to(self.dml)
+                    self.net_ptwo = self.net_ptwo.to(self.dml)
+                else:
+                    print("[INFO] DirectML not available")
+                    print("[WARN] Use CPU for training")
 
     def forward(self, x):
         x = self.net_pone(x)
@@ -145,6 +163,8 @@ def train(epoch):
         # Use cuda if available
         if torch.cuda.is_available():
             data, label = data.to('cuda'), label.to('cuda')
+        else:
+            data, label = data.to(model.dml), label.to(model.dml)
 
         # Predict data
         pred = model(data)
@@ -188,6 +208,8 @@ def test():
             # Use cuda if available
             if torch.cuda.is_available():
                 data, label = data.to('cuda'), label.to('cuda')
+            else:
+                data, label = data.to(model.dml), label.to(model.dml)
 
             # Predict data
             pred = model(data)

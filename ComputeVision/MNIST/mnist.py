@@ -69,11 +69,8 @@ hyper_params = {
     'batch_size_test': 1000,
     'lr': 0.01,
     'momentum': 0.5,
-    'random_seed': time.time_ns()
+    'random_seed': None
 }
-
-# Then initialize Random Pool
-torch.manual_seed(hyper_params['random_seed'])
 
 # Okay, let's load our datasets
 # Load training datasets
@@ -130,14 +127,30 @@ except FileNotFoundError:
     print("[INFO] Training mode: Initial training")
     if not os.path.exists('./output'):
         os.makedirs('./output')
+
+    # Generate new random seed
+    hyper_params['random_seed'] = time.time_ns()
+    print(f"[INFO] Generated new random seed: {hyper_params['random_seed']}")
+    with open('./output/seed.txt', 'w') as f:
+        f.write(str(hyper_params['random_seed']))
 except PermissionError:
     print ("[ERROR] Failed to read model: Permission denied")
     exit(-1)
 else:
     print("[INFO] Detect exist model, continue training")
+    try:
+        with open('./output/seed.txt', 'r') as f:
+            hyper_params['random_seed'] = int(f.read())
+    except FileNotFoundError or PermissionError:
+        print('[ERROR] Failed to read random seed')
+        exit(-1)
+        
     model.load_state_dict(torch.load('./output/model.ckpt'))
     optimizer.load_state_dict(torch.load('./output/optimizer.ckpt'))
     is_incremental = True
+
+# Then initialize Random Pool
+torch.manual_seed(hyper_params['random_seed'])
 
 # We need some variable to record loss and tracking training progress
 # Simply initialize a dict to do that

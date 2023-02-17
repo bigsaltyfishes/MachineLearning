@@ -3,6 +3,7 @@
 # Email: 32119500038@e.gzhu.edu.cn
 # Create date: 2022-11-28 18:18 UTC+8
 #
+import os
 import time
 import torch
 import torch.nn as nn
@@ -126,7 +127,9 @@ try:
     f=open('./output/model.ckpt', 'r')
     f.close()
 except FileNotFoundError:
-    print ("[INFO] Training mode: Initial training")
+    print("[INFO] Training mode: Initial training")
+    if not os.path.exists('./output'):
+        os.makedirs('./output')
 except PermissionError:
     print ("[ERROR] Failed to read model: Permission denied")
     exit(-1)

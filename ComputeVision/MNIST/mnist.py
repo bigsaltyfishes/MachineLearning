@@ -141,13 +141,12 @@ else:
     try:
         with open('./output/seed.txt', 'r') as f:
             hyper_params['random_seed'] = int(f.read())
-    except FileNotFoundError or PermissionError:
+    except (FileNotFoundError, PermissionError):
         print('[ERROR] Failed to read random seed')
         exit(-1)
         
     model.load_state_dict(torch.load('./output/model.ckpt'))
     optimizer.load_state_dict(torch.load('./output/optimizer.ckpt'))
-    is_incremental = True
 
 # Then initialize Random Pool
 torch.manual_seed(hyper_params['random_seed'])
@@ -248,15 +247,9 @@ if __name__ == '__main__':
     # Run a test before we start
     test()
     
-    if not is_incremental:
-        for epoch in range(1, hyper_params['n_epoch'] + 1):
-            train(epoch)
-            test()
-    else:
-        for epoch in range(hyper_params['n_epoch'] + 1, 2 * (hyper_params['n_epoch'] + 1) + 1):
-            tracker['counter']['train'].append(epoch * len(train_loader.dataset))
-            train(epoch)
-            test()
+    for epoch in range(1, hyper_params['n_epoch'] + 1):
+        train(epoch)
+        test()
     
     # After training and test, let's draw the training curve
     fig = plt.figure()
